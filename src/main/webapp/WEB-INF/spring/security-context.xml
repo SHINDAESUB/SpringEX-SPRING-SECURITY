@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="customAccessDenied" class="org.daesub.security.CustomAccessDeniedHandler"></bean>
+	<bean id="customLoginSuccessHandler" class="org.daesub.security.CustomLoginSuccessHandler"></bean>
+	
+	<!-- PasswordEncoder   
+	<bean id="customPasswordEncoder" class="org.daesub.security.CustomNoOpPasswordEncoder"></bean>
+	-->
+	
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"></bean>
+	
+	<bean id="customUserDetailsSerivce" class="org.daesub.security.CustomUserDetailsService"></bean>
+
+
+	<security:http auto-config="true" use-expressions="true">
+	      
+		<security:intercept-url pattern="/smaple/all" access="permitAll" />
+		
+    	<security:intercept-url pattern="/sample/member" access="hasRole('ROLE_DAESUB_MEMBER')"/>
+	
+	    <security:intercept-url pattern="/sample/admin" access="hasRole('ROLE_DAESUB_ADMIN')"/>
+	    
+		
+		<!-- 1. 접근 제안 URL(Url은 변함이 없음 -> custom 해서 사용해야 바꿈 2번 방법으로) 
+	    <security:access-denied-handler error-page="/accessError"/>-->
+	    <!-- 2. AccessDeniedHandler 인터페이스를 받은 Class 를 이용해서 설정하면 URL 도 변함 
+	         bean 설정으로 블러 옴 -->
+	    <security:access-denied-handler ref="customAccessDenied"/>
+
+		<!-- 기본 로그인 틀 제공	
+	    	  <security:form-login/>  -->
+		<!--  직접 로그인 화면 구현 -->
+			 <!--  authentication-success-handler-ref  로그인 성공 후 진행-->
+		<security:form-login login-page="/customLogin" authentication-success-handler-ref="customLoginSuccessHandler" />
+		
+		<!-- 로그아웃 화면 구현 -->
+		<security:logout logout-url="/customLogout" invalidate-session="true" />
+		
+		<!-- 자동 로그인  -->
+		<security:remember-me data-source-ref="dataSource" token-validity-seconds="604800"/>
+		
+		<!-- 자동로그인 쿠키 삭제 -->
+		<security:logout logout-url="/customLogout" invalidate-session="true" delete-cookies="remember-me,JSESSION_ID"/>
+	    
+		
+	</security:http>
+
+
+    <security:authentication-manager>
+    	<security:authentication-provider user-service-ref="customUserDetailsSerivce">		
+			<!-- JDBC 설정 
+			<security:jdbc-user-service data-source-ref="dataSource" />
+		    -->
+		    
+		    <!-- JDBC 쿼리 설정
+			<security:jdbc-user-service data-source-ref="dataSource" 
+			    users-by-username-query="select userid,userpw,enabled from tb1_member where userid= ?"
+			    authorities-by-username-query="select userid,auth from tb1_member_auth where userid=?"
+			    />
+			 --> 
+			 
+						
+			<!-- 패스워드 암호화 -->
+			<security:password-encoder ref="bcryptPasswordEncoder" />
+			
+			<!-- 패스워드 인코딩  
+			<security:password-encoder ref="customPasswordEncoder" />
+			-->
+	
+			<!-- JDBC 없이 설정    		 
+			<security:user-service>
+
+    			<security:user name="member" password="{noop}member" authorities="ROLE_MEMBER"/>
+    			
+    			<security:user name="admin" password="{noop}admin" authorities="ROLE_MEMBER,ROLE_ADMIN"/>
+    		</security:user-service>
+    		-->
+    	</security:authentication-provider>
+	</security:authentication-manager>
+
+
+
+</beans>

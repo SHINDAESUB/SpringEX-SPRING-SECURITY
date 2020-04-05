@@ -1,0 +1,14 @@
+CREATE TABLE tb1_member(
+	userid   VARCHAR2(50)  not null primary key,
+	userpw VARCHAR2(100) not null,
+	username VARCHAR2(100) not null,
+	regdate DATE default sysdate,
+	updatedate DATE default sysdate,
+	enabled  CHAR(1) default '1'
+);	  
+
+CREATE TABLE tb1_member_auth(
+	userid VARCHAR2(50) not null,
+	auth VARCHAR2(50) not null,
+	constraint fk_member_auth foreign key(userid) references tb1_member(userid)
+);
